@@ -1,18 +1,11 @@
 /*-------------------------------------------------------
- *  amazonで売ってるHiLetgo 128x64 LCD I2C版用
- *  ※Adafruit社の互換品なのでドライバがそのまま使える。
+ *  HiLetgo 128x64 LCD I2C版用
  *  スクロール式に文字表示する
- *  2018/8/26 外川
  -------------------------------------------------------*/
 #include "LCD.h"
-
-// コンパイル時にヘッダーファイルが適切に編集されていない場合に
-// "Height incorrect, please fix Adafruit_SSD1306.h!"
-// というエラーを表示するための記述
 #if (SSD1306_LCDHEIGHT != 64)
 #error("Height incorrect, please fix Adafruit_SSD1306.h!");
 #endif
-// RSTピンがない互換品を使用するので-1を指定
 Adafruit_SSD1306 display(-1);
 
 // LCD表示領域
