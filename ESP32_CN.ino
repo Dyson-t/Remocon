@@ -164,13 +164,32 @@ uint8_t counter_button2 = 0;
 void loop() {
     // notify changed value
     if (deviceConnected) {
-        lcdprint_hnh( "Connecting", 0);
 
-        // ジョイスティックの傾きを取得 ※各2Byteで送る。中心に少々遊びを設ける。
-        uint16_t v_stick1_lr = stick_hosei( analogRead( P_STICK1_LR )); 
-        uint16_t v_stick1_ud =stick_hosei( analogRead( P_STICK1_UD ));
-        uint16_t v_stick2_lr = stick_hosei( analogRead( P_STICK2_LR ));
-        uint16_t v_stick2_ud =stick_hosei( analogRead( P_STICK2_UD ));
+        // ジョイスティックの傾きを取得 ※各2Byteで送る。
+        uint16_t v_stick1_lr = analogRead( P_STICK1_LR );
+        uint16_t v_stick1_ud =analogRead( P_STICK1_UD );
+        uint16_t v_stick2_lr = analogRead( P_STICK2_LR );
+        uint16_t v_stick2_ud =analogRead( P_STICK2_UD );
+
+        // 半固定抵抗の値
+        //uint16_t v_volume = analogRead( P_VOLUME );
+        uint8_t v_volume = analogRead( P_VOLUME ) >> 4 ;
+        char msg[20];
+        sprintf( msg, "Connecting. VOL:%02x", v_volume );
+        lcdprint_hnh( msg, 0);
+
+        // 半固定抵抗の値を引く。これでニュートラル位置を微調整できるはず
+        // ※このやり方は良くない。もっとうまい方法を考えたい。
+        v_stick1_lr -= v_volume;
+        v_stick1_ud -= v_volume;
+        v_stick2_lr -= v_volume;
+        v_stick2_ud -= v_volume;
+
+        // ジョイスティックの傾きを補正。中心に少々遊びを設ける。
+        v_stick1_lr = stick_hosei( v_stick1_lr); 
+        v_stick1_ud =stick_hosei( v_stick1_ud);
+        v_stick2_lr = stick_hosei( v_stick2_lr);
+        v_stick2_ud =stick_hosei( v_stick2_ud);
 
         // ジョイスティックの傾きを纏める
         uint8_t v_sticks_R[8] = {(v_stick1_lr & 0xff00) >> 8, (v_stick1_lr & 0x00ff) 
@@ -182,18 +201,13 @@ void loop() {
         uint8_t v_button1 = digitalRead( P_BUTTON1 );
         uint8_t v_button2 = digitalRead( P_BUTTON2 );
 
-        // ボリュームの値
-        //uint16_t v_volume = analogRead( P_VOLUME );
-        uint8_t v_volume = analogRead( P_VOLUME ) >> 4 ;
-        //uint8_t v_vol8 = { v_volume & 0x00ff  };
-        //Serial.printf("v_volume = %x\n", v_volume);
         
         // 前回の値から変化したらNotify
         if((old_stick1_lr != v_stick1_lr) || (old_stick1_ud != v_stick1_ud)){notifyValue( pChrStickR, v_sticks_R );}
         if((old_stick2_lr != v_stick2_lr) || (old_stick2_ud != v_stick2_ud)){notifyValue( pChrStickL, v_sticks_L );}
         if( old_button1 != v_button1 ){ notifyValue( pChrButton1, &v_button1 ); }
         //if( old_button2 != v_button2 ){ notifyValue( pChrButton2, &v_button2 ); }
-        if( old_volume != v_volume ){ notifyValue( pChrVolume, &v_volume ); }
+        //if( old_volume != v_volume ){ notifyValue( pChrVolume, &v_volume ); }
 
         // ボタン2は押した時間をNotify
         if(v_button2){
@@ -212,7 +226,7 @@ void loop() {
         || ( old_stick2_ud != v_stick2_ud ) 
         || ( old_button1 != v_button1 ) 
         //|| ( old_button2 != v_button2 ) 
-        || ( old_volume != v_volume ) 
+        //|| ( old_volume != v_volume ) 
         ){
             char msg[20];
             sprintf( msg, "%03x%03x%03x%03x %x %x %x",v_stick1_lr, v_stick1_ud, v_stick2_lr, v_stick2_ud,  v_button1, v_button2, v_volume);
@@ -227,10 +241,10 @@ void loop() {
         }
         // RSSI値キャラクタリスティックの値をLCDに表示する。
         std::string rssi = pChrRssi->getValue();
-        char msg[20] = "RSSI:";
+        char msg2[20] = "RSSI:";
         for (int i = 0; i < rssi.length(); i++)
-          msg[i+5] = rssi[i];
-        lcdprint_hnh( msg, 1); 
+          msg2[i+5] = rssi[i];
+        lcdprint_hnh( msg2, 1); 
     }
 
     // disconnecting
